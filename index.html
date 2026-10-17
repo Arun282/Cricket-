@@ -2,7 +2,7 @@
 <html lang="hi">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#071a2d"><meta name="description" content="Cricket Sports Live — लाइव क्रिकेट स्कोर, मैच शेड्यूल और अधिकृत लाइव स्ट्रीम।">
+<meta name="theme-color" content="#071a2d"><link rel="manifest" href="./manifest.webmanifest"><meta name="description" content="Cricket Sports Live — लाइव क्रिकेट स्कोर, मैच शेड्यूल और अधिकृत लाइव स्ट्रीम।">
 <title>Cricket Sports Live | Live Cricket & Sports</title>
 <style>
 :root{--bg:#071a2d;--panel:#10263c;--panel2:#142f49;--line:#27435d;--text:#f4f8fc;--muted:#a8bdcf;--green:#2de08c;--orange:#ffb454;--red:#ff626b}
@@ -42,5 +42,5 @@ document.addEventListener("click",e=>{const p=e.target.closest("[data-page]");if
 $("match-form").addEventListener("submit",e=>{e.preventDefault();const stream=$("m-stream").value.trim(),authorized=$("m-authorized").checked;if(stream&&!authorized){alert("स्ट्रीम URL सेव करने के लिए अधिकार की पुष्टि करें।");return}if(stream&&!/^https:\/\//i.test(stream)){alert("सुरक्षा के लिए HTTPS URL इस्तेमाल करें।");return}const id=$("match-form").dataset.edit||("m"+Date.now());const m={id,title:$("m-title").value.trim(),status:$("m-status").value,team1:$("m-team1").value.trim(),team2:$("m-team2").value.trim(),score1:$("m-score1").value.trim(),score2:$("m-score2").value.trim(),date:$("m-date").value,tournament:$("m-tournament").value.trim()||"Cricket",stream,authorized,demo:false};const i=state.matches.findIndex(x=>x.id===id);if(i>=0)state.matches[i]=m;else state.matches.unshift(m);delete $("match-form").dataset.edit;save();e.target.reset();alert("मैच इस डिवाइस पर सेव हो गया।")});
 $("reset-form").addEventListener("click",()=>{$("match-form").reset();delete $("match-form").dataset.edit});
 $("news-form").addEventListener("submit",e=>{e.preventDefault();state.news.unshift({title:$("n-title").value.trim(),body:$("n-body").value.trim(),date:new Date().toISOString()});save();e.target.reset();alert("न्यूज़ इस डिवाइस पर प्रकाशित हो गई।")});
-$("year").textContent=new Date().getFullYear();render();
+$("year").textContent=new Date().getFullYear();render();if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 </script></body></html>
