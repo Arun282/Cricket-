@@ -118,10 +118,11 @@ jobs:
           <resources><string name="app_name">Cricket Sports Live</string></resources>
           EOF
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Build debug APK
-        run: |
-          gradle --version
-          gradle assembleDebug --no-daemon
+        run: gradle assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
