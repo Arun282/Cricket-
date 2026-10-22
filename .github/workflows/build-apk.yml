@@ -1,0 +1,131 @@
+name: Build Cricket Sports Live APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "index.html"
+      - ".github/workflows/build-apk.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Generate Android WebView wrapper
+        shell: bash
+        run: |
+          mkdir -p app/src/main/java/com/cricketsports/live app/src/main/res/values
+          cat > settings.gradle <<'EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+          rootProject.name = "CricketSportsLive"
+          include(":app")
+          EOF
+          cat > build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.6.1' apply false
+          }
+          EOF
+          cat > gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          EOF
+          cat > app/build.gradle <<'EOF'
+          plugins { id 'com.android.application' }
+          android {
+              namespace 'com.cricketsports.live'
+              compileSdk 35
+              defaultConfig {
+                  applicationId 'com.cricketsports.live'
+                  minSdk 23
+                  targetSdk 35
+                  versionCode 1
+                  versionName '1.0.0'
+              }
+          }
+          EOF
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <application android:theme="@android:style/Theme.Material.Light.NoActionBar" android:label="Cricket Sports Live" android:usesCleartextTraffic="false">
+                  <activity android:name=".MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+          cat > app/src/main/java/com/cricketsports/live/MainActivity.java <<'EOF'
+          package com.cricketsports.live;
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebSettings;
+          import android.view.ViewGroup;
+          import android.graphics.Color;
+          import android.widget.FrameLayout;
+          import android.widget.TextView;
+          import android.view.Gravity;
+          public class MainActivity extends Activity {
+              private static final String APP_URL = "https://arun282.github.io/Cricket-/";
+              @Override public void onCreate(Bundle state) {
+                  super.onCreate(state);
+                  getWindow().setStatusBarColor(Color.rgb(7,26,45));
+                  getWindow().setNavigationBarColor(Color.rgb(7,26,45));
+                  WebView web = new WebView(this);
+                  web.setBackgroundColor(Color.rgb(7,26,45));
+                  WebSettings s = web.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  s.setMediaPlaybackRequiresUserGesture(true);
+                  s.setAllowFileAccess(false);
+                  s.setAllowContentAccess(false);
+                  web.setWebViewClient(new WebViewClient());
+                  web.setWebChromeClient(new WebChromeClient());
+                  web.loadUrl(APP_URL);
+                  setContentView(web, new ViewGroup.LayoutParams(-1,-1));
+              }
+              @Override public void onBackPressed() {
+                  View v = getWindow().getDecorView().findViewById(android.R.id.content);
+                  if (v instanceof ViewGroup) {
+                      android.view.View child=((ViewGroup)v).getChildAt(0);
+                      if(child instanceof WebView && ((WebView)child).canGoBack()){((WebView)child).goBack();return;}
+                  }
+                  super.onBackPressed();
+              }
+          }
+          EOF
+          cat > app/src/main/res/values/strings.xml <<'EOF'
+          <resources><string name="app_name">Cricket Sports Live</string></resources>
+          EOF
+
+      - name: Build debug APK
+        run: |
+          gradle --version
+          gradle assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cricket-Sports-Live-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
